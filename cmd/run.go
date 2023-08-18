@@ -1,6 +1,5 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2023 HAROLD ANDERSON
 */
 package cmd
 
@@ -14,6 +13,7 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
+
 var BRANCH = ""
 
 func getFromInput(placeholder string) string {
@@ -159,11 +159,83 @@ func gitAddHandler() {
 
 }
 
+func generateCommitMessage() string {
+	// type
+	typeItems := []string{"init", "fix", "feat", "impl", "chore"}
+	index := -1
+	var result string
+	var err error
+
+	for index < 0 {
+		prompt := promptui.SelectWithAdd{
+			Label:    "Select Type: ",
+			Items:    typeItems,
+			AddLabel: "Other",
+		}
+
+		index, result, err = prompt.Run()
+
+		if index == -1 {
+			typeItems = append(typeItems, result)
+		}
+	}
+
+	if err != nil {
+		fmt.Printf("Prompt failed %v\n", err)
+		return ""
+	}
+
+	// Scope
+	listDir, err := os.ReadDir("./")
+	if err != nil {
+		fmt.Println("Have something failed when reading all scope")
+	}
+
+	scopeItems := []string{}
+	for _, d := range listDir {
+		scopeItems = append(scopeItems, d.Name())
+	}
+
+	index = -1
+	var resultScope string
+	var errScope error
+
+	for index < 0 {
+		prompt := promptui.SelectWithAdd{
+			Label:    "Select scope: ",
+			Items:    scopeItems,
+			AddLabel: "Other",
+		}
+
+		index, resultScope, errScope = prompt.Run()
+
+		if index == -1 {
+			scopeItems = append(scopeItems, resultScope)
+		}
+	}
+
+	if errScope != nil {
+		fmt.Printf("Prompt failed %v\n", errScope)
+		return ""
+	}
+
+	// description
+	msg := getFromInput("description")
+
+	return result + "(" + resultScope +"): " + msg
+}
+
 func gitCommitHandler(cmd *cobra.Command) {
 	msg, err := cmd.Flags().GetString("message")
-	if err == nil || msg == "" {
-		msg = getFromInput("commit message")
+	if err != nil || msg == ""{
+		choise := getFromInput("Commit message: 1. Auto | 2. Input Manual")
+		if choise == "1" {
+			msg = generateCommitMessage()
+		} else {
+			msg = getFromInput("commit message")
+		}
 	}
+
 	fmt.Printf("Commit file with message: %s \n", msg)
 	runCli("git commit -m " + "\"" + msg + "\"")
 }
@@ -173,7 +245,7 @@ func gitPushHandler(cmd *cobra.Command) {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	
+
 	if isVerify {
 		fmt.Println("Push code")
 		runCli("git push origin " + BRANCH)
