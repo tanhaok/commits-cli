@@ -228,7 +228,7 @@ func generateCommitMessage() string {
 func gitCommitHandler(cmd *cobra.Command) {
 	msg, err := cmd.Flags().GetString("message")
 	if err != nil || msg == ""{
-		choise := getFromInput("1. Auto | 2. Input Manual")
+		choise := getFromInput("Commit message: 1. Auto | 2. Input Manual")
 		if choise == "1" {
 			msg = generateCommitMessage()
 		} else {
