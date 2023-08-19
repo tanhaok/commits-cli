@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/manifoldco/promptui"
@@ -28,7 +29,13 @@ func getFromInput(placeholder string) string {
 }
 
 func runCli(cmd string) string {
-	out, err := exec.Command("zsh", "-c", cmd).Output()
+	var shellType string
+	if runtime.GOOS == "windows" {
+		shellType = "powershell"
+	} else {
+		shellType = "zsh"
+	}
+	out, err := exec.Command(shellType, "-c", cmd).Output()
 	if err != nil {
 		fmt.Printf("Something wrong when run %s \n, %s", cmd, err.Error())
 		os.Exit(1)
@@ -56,7 +63,6 @@ func gitBranchHandler(cmd *cobra.Command) {
 		cmd.Flags()
 		fmt.Println(out)
 	}
-
 }
 
 type item struct {
@@ -70,7 +76,7 @@ func selectItems(selectedPos int, allItems []*item) ([]*item, error) {
 	// already exist.
 	const doneID = "Done"
 	if len(allItems) > 0 && allItems[0].ID != doneID {
-		var items = []*item{
+		items := []*item{
 			{
 				ID: doneID,
 			},
@@ -156,7 +162,6 @@ func gitAddHandler() {
 		}
 
 	}
-
 }
 
 func generateCommitMessage() string {
@@ -222,12 +227,12 @@ func generateCommitMessage() string {
 	// description
 	msg := getFromInput("description")
 
-	return result + "(" + resultScope +"): " + msg
+	return result + "(" + resultScope + "): " + msg
 }
 
 func gitCommitHandler(cmd *cobra.Command) {
 	msg, err := cmd.Flags().GetString("message")
-	if err != nil || msg == ""{
+	if err != nil || msg == "" {
 		choise := getFromInput("Commit message: 1. Auto | 2. Input Manual")
 		if choise == "1" {
 			msg = generateCommitMessage()
@@ -284,5 +289,4 @@ func init() {
 	runCmd.Flags().StringP("message", "m", "", "Message to commit")
 	runCmd.Flags().StringP("branch", "b", "", "New branch")
 	runCmd.Flags().BoolP("check", "c", false, "Need to check all requirement before push code")
-
 }

@@ -22,4 +22,3 @@ ggc run
 ```sh
 ggc run -c=true
 ```
-
